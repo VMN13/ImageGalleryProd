@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import ReactDOM from 'react-dom/client';  
+import { createPortal } from 'react-dom';  // Import createPortal from 'react-dom'
 import { useTheme } from '../ThemeContext';
 import './AudioPlayer.css';
 
 const soundUrls = {
-  sea: '/sounds/water_ocean_waves_rocks_light_003.mp3',
-  forest: '/sounds/les.mp3',
-  rain: '/sounds/deti-online.com_-_dozhd.mp3',
-  calm: 'https://www.soundjay.com/misc/sounds/wind-chimes-1.wav',
+  sea: '/sounds/sea.mp3',
+  forest: '/sounds/forest.mp3',
+  rain: '/sounds/rain.mp3',
+  calm: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
 };
 
 const soundNames = {
@@ -63,20 +63,27 @@ const AudioPlayer = () => {
 
   const handlePlay = (sound) => {
     if (audioRef.current) {
-      const audio = new Audio(soundUrls[sound]);
-      audio.preload = 'metadata';
+      // Pause and reset if switching sounds
       if (currentSound && currentSound !== sound) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
+      
+      // If resuming the same sound
       if (currentSound === sound && !isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().catch(e => {
+          if (e.name !== 'AbortError') console.error('Play error:', e);
+        });
         setIsPlaying(true);
         setShowFloatingPlayer(true);
         return;
       }
+      
+      // Load and play new sound
       audioRef.current.src = soundUrls[sound];
-      audioRef.current.play();
+      audioRef.current.play().catch(e => {
+        if (e.name !== 'AbortError') console.error('Play error:', e);
+      });
       setCurrentSound(sound);
       setIsPlaying(true);
       setShowFloatingPlayer(true);
@@ -260,7 +267,7 @@ const AudioPlayer = () => {
         </div>
       </div>
 
-      {showFloatingPlayer && ReactDOM.createPortal(
+      {showFloatingPlayer && createPortal(
         <div 
           className={`floating-player ${isDarkMode ? 'dark' : 'light'} ${isMinimized ? 'minimized' : ''} ${isDragging ? 'dragging' : ''}`}
           style={{ top: floatingPosition.top, left: floatingPosition.left }}
